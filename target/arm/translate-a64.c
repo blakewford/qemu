@@ -14582,6 +14582,9 @@ static bool btype_destination_ok(uint32_t insn, bool bt, int btype)
     return false;
 }
 
+const char* arm64_decode(uint32_t opcode);
+#include "disarm64.c"
+
 /* C3.1 A64 instruction index by encoding */
 static void disas_a64_insn(CPUARMState *env, DisasContext *s)
 {
@@ -14591,6 +14594,8 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     insn = arm_ldl_code(env, s->base.pc_next, s->sctlr_b);
     s->insn = insn;
     s->base.pc_next += 4;
+
+    printf("0x%lx 0x%x %s\n", s->pc_curr, insn, arm64_decode(insn));
 
     s->fp_access_checked = false;
     s->sve_access_checked = false;
