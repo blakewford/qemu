@@ -615,6 +615,8 @@ static int parse_args(int argc, char **argv)
 
 int main(int argc, char **argv, char **envp)
 {
+    printf("{\"triple\":\"aarch64-unknown-linux-gnu\",\"size\":309666,\"run\":[");
+
     struct target_pt_regs regs1, *regs = &regs1;
     struct image_info info1, *info = &info1;
     struct linux_binprm bprm;
@@ -859,6 +861,8 @@ int main(int argc, char **argv, char **envp)
         gdb_handlesig(cpu, 0);
     }
     cpu_loop(env);
+    printf("]}");
+
     /* never exits */
     return 0;
 }

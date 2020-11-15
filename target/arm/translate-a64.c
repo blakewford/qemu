@@ -14595,7 +14595,7 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     s->insn = insn;
     s->base.pc_next += 4;
 
-    printf("0x%lx 0x%x %s\n", s->pc_curr, insn, arm64_decode(insn));
+    printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", s->pc_curr, insn, arm64_decode(insn));
 
     s->fp_access_checked = false;
     s->sve_access_checked = false;
