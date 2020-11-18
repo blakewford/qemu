@@ -615,6 +615,7 @@ static int parse_args(int argc, char **argv)
 
 int main(int argc, char **argv, char **envp)
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
     printf("{\"triple\":\"aarch64-unknown-linux-gnu\",\"size\":309666,\"run\":[");
 
     struct target_pt_regs regs1, *regs = &regs1;
@@ -861,7 +862,6 @@ int main(int argc, char **argv, char **envp)
         gdb_handlesig(cpu, 0);
     }
     cpu_loop(env);
-    printf("]}");
 
     /* never exits */
     return 0;
