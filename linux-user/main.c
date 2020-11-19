@@ -613,6 +613,39 @@ static int parse_args(int argc, char **argv)
     return optind;
 }
 
+uint64_t gStartAddress = 0;
+
+static int32_t getIndexForString(uint8_t* binary, uint64_t size, uint64_t offset, const char* search)
+{
+    char stringBuffer[size];
+    memcpy(stringBuffer, &binary[offset], size);
+
+    char nameBuffer[64];
+    memset(nameBuffer, '\0', 64);
+
+    int32_t ndx = 0;
+    int32_t cursor = 0;
+    uint32_t length = size;
+    while(length--)
+    {
+        nameBuffer[cursor] = stringBuffer[ndx];
+        if(nameBuffer[cursor] == '\0')
+        {
+            if(!strcmp(nameBuffer, search))
+                return ndx - strlen(nameBuffer);
+            memset(nameBuffer, '\0', 64);
+            cursor = 0;
+        }
+        else
+        {
+            cursor++;
+        }
+        ndx++;
+    }
+
+    return -1;
+}
+
 int main(int argc, char **argv, char **envp)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -815,6 +848,86 @@ int main(int argc, char **argv, char **envp)
     if (ret != 0) {
         printf("Error while loading %s: %s\n", exec_path, strerror(-ret));
         _exit(EXIT_FAILURE);
+    }
+
+    FILE* executable = fopen(exec_path, "r");
+    if(executable)
+    {
+        fseek(executable, 0, SEEK_END);
+        int32_t size = ftell(executable);
+        rewind(executable);
+        uint8_t* binary = (uint8_t*)malloc(size);
+        size_t read = fread(binary, 1, size, executable);
+        if(read == 0) return -1;
+
+        Elf64_Ehdr* header = (Elf64_Ehdr*)binary;
+
+        struct sectionInfo
+        {
+            uint32_t type;
+            uint32_t index;
+            uint64_t address;
+            uint64_t offset;
+            uint64_t size;
+            bool plt;
+            bool text;
+            bool symbols;
+            bool debugLine;
+            bool stringTable;
+        }info;
+
+        struct sections
+        {
+            uint32_t numSections;
+            uint8_t* si;
+        }sect;
+
+        int32_t ndx = 0;
+        uint64_t offset = header->e_shoff;
+        uint16_t numHeaders = header->e_shnum;
+        uint16_t headerSize = header->e_shentsize;
+        uint16_t stringsIndex = header->e_shstrndx;
+        const int16_t totalHeaders = numHeaders;
+        const size_t infoSize = sizeof(info);
+        sect.si = (uint8_t*)malloc(infoSize*numHeaders);
+        while(numHeaders--)
+        {
+            Elf64_Shdr* section = (Elf64_Shdr*)(binary + offset);
+            info.index = section->sh_name;
+            info.address = section->sh_addr;
+            info.type = section->sh_type;
+            info.offset = section->sh_offset;
+            info.size = section->sh_size;
+            memcpy(&sect.si[infoSize*ndx], &info, infoSize);
+            offset += headerSize;
+            ndx++;
+        }
+
+        memcpy(&info, &sect.si[stringsIndex*infoSize], infoSize);
+        int32_t text        = getIndexForString(binary, info.size, info.offset, ".text");
+        int32_t symbolTable = getIndexForString(binary, info.size, info.offset, ".symtab");
+        int32_t stringTable = getIndexForString(binary, info.size, info.offset, ".strtab");
+
+        ndx = 0;
+        numHeaders = totalHeaders;
+
+        int32_t textIndex = 0;
+        while(numHeaders--)
+        {
+            memcpy(&info, &sect.si[ndx*infoSize], infoSize);
+            info.text        = info.index == text;
+            info.symbols     = info.index == symbolTable;
+            info.stringTable = info.index == stringTable;
+            if(info.text)
+                textIndex = ndx;
+            ndx++;
+        }
+
+        memcpy(&info, &sect.si[textIndex*infoSize], infoSize);
+        gStartAddress = info.address;
+
+        free(binary);
+        fclose(executable);
     }
 
     for (wrk = target_environ; *wrk; wrk++) {

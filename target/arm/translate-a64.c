@@ -14595,7 +14595,7 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     s->insn = insn;
     s->base.pc_next += 4;
 
-//    if(s->pc_curr < 0x402364 /*main*/)
+//    if(s->pc_curr >= 0x400230 && s->pc_curr < 0x402368 /*main*/)
     {
         printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", s->pc_curr, insn, arm64_decode(insn));
     }
