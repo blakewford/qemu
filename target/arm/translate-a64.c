@@ -71,6 +71,8 @@ typedef struct AArch64DecodeTable {
 } AArch64DecodeTable;
 
 uint64_t gStartAddress = 0;
+uint64_t gEntryPointAddress = 0;
+uint64_t gEntryPointSize = 0;
 
 /* initialize TCG globals.  */
 void a64_translate_init(void)
@@ -99,7 +101,12 @@ void a64_translate_init(void)
         size_t read = fread(binary, 1, size, data);
         if(read == 0) return;
 
-        gStartAddress = *(uint64_t*)binary;
+        uint8_t* offset = binary;
+        gStartAddress = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
+        gEntryPointAddress = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
+        gEntryPointSize = *(uint64_t*)offset;
 
         free(binary);
         fclose(data);
@@ -14613,7 +14620,7 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     s->insn = insn;
     s->base.pc_next += 4;
 
-    if(s->pc_curr >= gStartAddress && s->pc_curr < 0x402368 /*main*/)
+    if(s->pc_curr >= gStartAddress && s->pc_curr < (gEntryPointAddress + gEntryPointSize))
     {
         printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", s->pc_curr, insn, arm64_decode(insn));
     }

@@ -644,6 +644,21 @@ static int32_t getIndexForString(uint8_t* binary, uint64_t size, uint64_t offset
     return -1;
 }
 
+static void getStringForIndex(uint8_t* binary, uint64_t size, uint64_t offset, int32_t index, char* buffer, int32_t bufferSize)
+{
+    char stringBuffer[size];
+    memcpy(stringBuffer, &binary[offset], size);
+
+    memset(buffer, '\0', bufferSize);
+
+    int32_t cursor = 0;
+    while(stringBuffer[index + cursor] != '\0')
+    {
+        buffer[cursor] = stringBuffer[index + cursor];
+        cursor++;
+    }
+}
+
 int main(int argc, char **argv, char **envp)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -910,6 +925,8 @@ int main(int argc, char **argv, char **envp)
         numHeaders = totalHeaders;
 
         int32_t textIndex = 0;
+        int32_t symbolsIndex = 0;
+        int32_t stringTableIndex = 0;
         while(numHeaders--)
         {
             memcpy(&info, &sect.si[ndx*infoSize], infoSize);
@@ -918,6 +935,35 @@ int main(int argc, char **argv, char **envp)
             info.stringTable = info.index == stringTable;
             if(info.text)
                 textIndex = ndx;
+            if(info.symbols)
+                symbolsIndex = ndx;
+            if(info.stringTable)
+                stringTableIndex = ndx;
+            ndx++;
+        }
+
+        memcpy(&info, &sect.si[symbolsIndex*infoSize], infoSize);
+        int32_t symbols = info.size / sizeof(Elf64_Sym);
+        int32_t symbolOffset = info.offset;
+
+        memcpy(&info, &sect.si[stringTableIndex*infoSize], infoSize);
+
+        uint64_t entryPointAddress = 0;
+        uint64_t entryPointSize = 0;
+        char buffer[256];
+        while(symbols--)
+        {
+            Elf64_Sym* symbols = (Elf64_Sym*)(binary + symbolOffset);
+            if(ELF64_ST_TYPE(symbols[ndx].st_info) == 2) //function
+            {
+                getStringForIndex(binary, info.size, info.offset, symbols[ndx].st_name, buffer, 256);
+                if(!strcmp("main", buffer))
+                {
+                    entryPointAddress = symbols[ndx].st_value;
+                    entryPointSize = symbols[ndx].st_size;
+                    break;
+                }
+            }
             ndx++;
         }
 
@@ -926,6 +972,8 @@ int main(int argc, char **argv, char **envp)
         if(data != NULL)
         {
             fwrite(&info.address, sizeof(info.address), 1, data);
+            fwrite(&entryPointAddress, sizeof(entryPointAddress), 1, data);
+            fwrite(&entryPointSize, sizeof(entryPointSize), 1, data);
             fclose(data);
         }
 
