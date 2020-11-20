@@ -70,6 +70,8 @@ typedef struct AArch64DecodeTable {
     AArch64DecodeFn *disas_fn;
 } AArch64DecodeTable;
 
+uint64_t gStartAddress = 0;
+
 /* initialize TCG globals.  */
 void a64_translate_init(void)
 {
@@ -86,6 +88,22 @@ void a64_translate_init(void)
 
     cpu_exclusive_high = tcg_global_mem_new_i64(cpu_env,
         offsetof(CPUARMState, exclusive_high), "exclusive_high");
+
+    FILE* data = fopen("/tmp/qemu", "r");
+    if(data != NULL)
+    {
+        fseek(data, 0, SEEK_END);
+        int32_t size = ftell(data);
+        rewind(data);
+        uint8_t* binary = (uint8_t*)malloc(size);
+        size_t read = fread(binary, 1, size, data);
+        if(read == 0) return;
+
+        gStartAddress = *(uint64_t*)binary;
+
+        free(binary);
+        fclose(data);
+    }
 }
 
 /*
@@ -14595,7 +14613,7 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     s->insn = insn;
     s->base.pc_next += 4;
 
-//    if(s->pc_curr >= 0x400230 && s->pc_curr < 0x402368 /*main*/)
+    if(s->pc_curr >= gStartAddress && s->pc_curr < 0x402368 /*main*/)
     {
         printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", s->pc_curr, insn, arm64_decode(insn));
     }

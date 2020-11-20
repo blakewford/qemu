@@ -613,8 +613,6 @@ static int parse_args(int argc, char **argv)
     return optind;
 }
 
-uint64_t gStartAddress = 0;
-
 static int32_t getIndexForString(uint8_t* binary, uint64_t size, uint64_t offset, const char* search)
 {
     char stringBuffer[size];
@@ -924,7 +922,12 @@ int main(int argc, char **argv, char **envp)
         }
 
         memcpy(&info, &sect.si[textIndex*infoSize], infoSize);
-        gStartAddress = info.address;
+        FILE* data = fopen("/tmp/qemu", "w");
+        if(data != NULL)
+        {
+            fwrite(&info.address, sizeof(info.address), 1, data);
+            fclose(data);
+        }
 
         free(binary);
         fclose(executable);
