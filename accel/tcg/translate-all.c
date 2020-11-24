@@ -1690,11 +1690,11 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
 
     phys_pc = get_page_addr_code(env, pc);
 
-    if (phys_pc == -1) {
+//    if (phys_pc == -1) {
         /* Generate a temporary TB with 1 insn in it */
         cflags &= ~CF_COUNT_MASK;
         cflags |= CF_NOCACHE | 1;
-    }
+//    }
 
     cflags &= ~CF_CLUSTER_MASK;
     cflags |= cpu->cluster_index << CF_CLUSTER_SHIFT;

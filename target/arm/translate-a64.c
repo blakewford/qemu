@@ -70,10 +70,6 @@ typedef struct AArch64DecodeTable {
     AArch64DecodeFn *disas_fn;
 } AArch64DecodeTable;
 
-uint64_t gStartAddress = 0;
-uint64_t gEntryPointAddress = 0;
-uint64_t gEntryPointSize = 0;
-
 /* initialize TCG globals.  */
 void a64_translate_init(void)
 {
@@ -90,27 +86,6 @@ void a64_translate_init(void)
 
     cpu_exclusive_high = tcg_global_mem_new_i64(cpu_env,
         offsetof(CPUARMState, exclusive_high), "exclusive_high");
-
-    FILE* data = fopen("/tmp/qemu", "r");
-    if(data != NULL)
-    {
-        fseek(data, 0, SEEK_END);
-        int32_t size = ftell(data);
-        rewind(data);
-        uint8_t* binary = (uint8_t*)malloc(size);
-        size_t read = fread(binary, 1, size, data);
-        if(read == 0) return;
-
-        uint8_t* offset = binary;
-        gStartAddress = *(uint64_t*)offset;
-        offset += sizeof(uint64_t);
-        gEntryPointAddress = *(uint64_t*)offset;
-        offset += sizeof(uint64_t);
-        gEntryPointSize = *(uint64_t*)offset;
-
-        free(binary);
-        fclose(data);
-    }
 }
 
 /*
@@ -14607,8 +14582,6 @@ static bool btype_destination_ok(uint32_t insn, bool bt, int btype)
     return false;
 }
 
-#include "../../disarm64.c"
-
 /* C3.1 A64 instruction index by encoding */
 static void disas_a64_insn(CPUARMState *env, DisasContext *s)
 {
@@ -14618,12 +14591,6 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     insn = arm_ldl_code(env, s->base.pc_next, s->sctlr_b);
     s->insn = insn;
     s->base.pc_next += 4;
-
-    if(s->pc_curr >= gStartAddress)
-//    if(s->pc_curr >= gStartAddress && s->pc_curr < (gEntryPointAddress + gEntryPointSize))
-    {
-        printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", s->pc_curr, insn, arm64_decode(insn));
-    }
 
     s->fp_access_checked = false;
     s->sve_access_checked = false;

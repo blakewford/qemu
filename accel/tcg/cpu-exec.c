@@ -41,9 +41,9 @@
 #include "sysemu/cpu-timers.h"
 #include "sysemu/replay.h"
 
-uint64_t gStartAddress2 = 0;
-uint64_t gEntryPointAddress2 = 0;
-uint64_t gEntryPointSize2 = 0;
+uint64_t gStartAddress = 0;
+uint64_t gEntryPointAddress = 0;
+uint64_t gEntryPointSize = 0;
 uint8_t* gTextSection = NULL;
 uint64_t gTextSize = 0;
 
@@ -183,15 +183,14 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
     }
 #endif /* DEBUG_DISAS */
 
-    if(itb->pc >= gStartAddress2)
-//    if(itb->pc >= gStartAddress2 && itb->pc < (gEntryPointAddress2 + gEntryPointSize2))
+    if(itb->pc >= gStartAddress && itb->pc < (gEntryPointAddress + gEntryPointSize))
     {
         uint64_t offset = 0;
         uint16_t count = (itb->size / 4);
         while(count--)
         {
             uint32_t insn = 0;
-            uint64_t relative = (itb->pc + offset) - gStartAddress2;
+            uint64_t relative = (itb->pc + offset) - gStartAddress;
             if(relative < gTextSize)
             {
                 insn = *(uint32_t*)&gTextSection[relative];
@@ -739,11 +738,11 @@ int cpu_exec(CPUState *cpu)
         if(read == 0) return -1;
 
         uint8_t* offset = binary;
-        gStartAddress2 = *(uint64_t*)offset;
+        gStartAddress = *(uint64_t*)offset;
         offset += sizeof(uint64_t);
-        gEntryPointAddress2 = *(uint64_t*)offset;
+        gEntryPointAddress = *(uint64_t*)offset;
         offset += sizeof(uint64_t);
-        gEntryPointSize2 = *(uint64_t*)offset;
+        gEntryPointSize = *(uint64_t*)offset;
         offset += sizeof(uint64_t);
         textOffset = *(uint64_t*)offset;
         offset += sizeof(uint64_t);
