@@ -14607,8 +14607,7 @@ static bool btype_destination_ok(uint32_t insn, bool bt, int btype)
     return false;
 }
 
-const char* arm64_decode(uint32_t opcode);
-#include "disarm64.c"
+#include "../../disarm64.c"
 
 /* C3.1 A64 instruction index by encoding */
 static void disas_a64_insn(CPUARMState *env, DisasContext *s)
@@ -14620,7 +14619,8 @@ static void disas_a64_insn(CPUARMState *env, DisasContext *s)
     s->insn = insn;
     s->base.pc_next += 4;
 
-    if(s->pc_curr >= gStartAddress && s->pc_curr < (gEntryPointAddress + gEntryPointSize))
+    if(s->pc_curr >= gStartAddress)
+//    if(s->pc_curr >= gStartAddress && s->pc_curr < (gEntryPointAddress + gEntryPointSize))
     {
         printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", s->pc_curr, insn, arm64_decode(insn));
     }

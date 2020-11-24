@@ -1,41 +1,41 @@
 #include <stdint.h>
 
-const uint32_t FILTER0 = 0x7FE0FC00;
-const uint32_t FILTER1 = 0x7FE00000;
-const uint32_t FILTER2 = 0x7F200000;
-const uint32_t FILTER3 = 0x7F000000;
-const uint32_t FILTER4 = 0x9F000000;
-const uint32_t FILTER5 = 0x7F800000;
-const uint32_t FILTER6 = 0x7FE0FFE0;
-const uint32_t FILTER7 = 0xBFC00000;
-const uint32_t FILTER8 = 0xBFD00C00;
-const uint32_t FILTER9 = 0xFC000000;
-const uint32_t FILTERA = 0xFFFFFC1F;
-const uint32_t FILTERB = 0xFF200000;
-const uint32_t FILTERC = 0x7FE0001F;
-const uint32_t FILTERD = 0x7F00001F;
-const uint32_t FILTERE = 0x7F20001F;
-const uint32_t FILTERF = 0xFF000010;
-const uint32_t FILTER10 = 0x7F807C00;
-const uint32_t FILTER11 = 0x7FC00000;
-const uint32_t FILTER12 = 0x3FC00000;
-const uint32_t FILTER13 = 0xBFE00C00;
-const uint32_t FILTER14 = 0x3FE00C00;
-const uint32_t FILTER15 = 0x3F600C00;
-const uint32_t FILTER16 = 0xFFE00C00;
-const uint32_t FILTER17 = 0xFFC00000;
-const uint32_t FILTER18 = 0xFFFFFC00;
-const uint32_t FILTER19 = 0x7F30FC00;
-const uint32_t FILTER1A = 0xBFFFFC00;
-const uint32_t FILTER1B = 0xBFE0FC00;
-const uint32_t FILTER1C = 0x7FE07C00;
-const uint32_t FILTER1D = 0xFF20FC00;
-const uint32_t FILTER1E = 0xFF201FE0;
-const uint32_t FILTER1F = 0xBF80FC00;
-const uint32_t FILTER20 = 0xBF000000;
-const uint32_t FILTER21 = 0x9FF80C00;
+static const uint32_t FILTER0 = 0x7FE0FC00;
+static const uint32_t FILTER1 = 0x7FE00000;
+static const uint32_t FILTER2 = 0x7F200000;
+static const uint32_t FILTER3 = 0x7F000000;
+static const uint32_t FILTER4 = 0x9F000000;
+static const uint32_t FILTER5 = 0x7F800000;
+static const uint32_t FILTER6 = 0x7FE0FFE0;
+static const uint32_t FILTER7 = 0xBFC00000;
+static const uint32_t FILTER8 = 0xBFD00C00;
+static const uint32_t FILTER9 = 0xFC000000;
+static const uint32_t FILTERA = 0xFFFFFC1F;
+static const uint32_t FILTERB = 0xFF200000;
+static const uint32_t FILTERC = 0x7FE0001F;
+static const uint32_t FILTERD = 0x7F00001F;
+static const uint32_t FILTERE = 0x7F20001F;
+static const uint32_t FILTERF = 0xFF000010;
+static const uint32_t FILTER10 = 0x7F807C00;
+static const uint32_t FILTER11 = 0x7FC00000;
+static const uint32_t FILTER12 = 0x3FC00000;
+static const uint32_t FILTER13 = 0xBFE00C00;
+static const uint32_t FILTER14 = 0x3FE00C00;
+static const uint32_t FILTER15 = 0x3F600C00;
+static const uint32_t FILTER16 = 0xFFE00C00;
+static const uint32_t FILTER17 = 0xFFC00000;
+static const uint32_t FILTER18 = 0xFFFFFC00;
+static const uint32_t FILTER19 = 0x7F30FC00;
+static const uint32_t FILTER1A = 0xBFFFFC00;
+static const uint32_t FILTER1B = 0xBFE0FC00;
+static const uint32_t FILTER1C = 0x7FE07C00;
+static const uint32_t FILTER1D = 0xFF20FC00;
+static const uint32_t FILTER1E = 0xFF201FE0;
+static const uint32_t FILTER1F = 0xBF80FC00;
+static const uint32_t FILTER20 = 0xBF000000;
+static const uint32_t FILTER21 = 0x9FF80C00;
 
-const char* arm64_decode(uint32_t opcode)
+static const char* arm64_decode(uint32_t opcode)
 {
     uint16_t category = (opcode & 0x1E000000) >> 25;
     switch(category)

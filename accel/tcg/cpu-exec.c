@@ -41,6 +41,10 @@
 #include "sysemu/cpu-timers.h"
 #include "sysemu/replay.h"
 
+uint64_t gStartAddress2 = 0;
+uint64_t gEntryPointAddress2 = 0;
+uint64_t gEntryPointSize2 = 0;
+
 /* -icount align implementation. */
 
 typedef struct SyncClocks {
@@ -143,6 +147,8 @@ static void init_delay_params(SyncClocks *sc, const CPUState *cpu)
 }
 #endif /* CONFIG USER ONLY */
 
+#include "../../disarm64.c"
+
 /* Execute a TB, and fix up the CPU state afterwards if necessary */
 static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
 {
@@ -174,6 +180,18 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
         qemu_log_unlock(logfile);
     }
 #endif /* DEBUG_DISAS */
+
+    if(itb->pc >= gStartAddress2)
+//    if(itb->pc >= gStartAddress2 && itb->pc < (gEntryPointAddress2 + gEntryPointSize2))
+    {
+        uint64_t offset = 0;
+        uint16_t count = (itb->size / 4);
+        while(count--)
+        {
+            printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", itb->pc + offset, 0, arm64_decode(0));
+            offset += 4;
+        }
+    }
 
     ret = tcg_qemu_tb_exec(env, tb_ptr);
     cpu->can_do_io = 1;
@@ -700,6 +718,27 @@ static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
 
 int cpu_exec(CPUState *cpu)
 {
+    FILE* data = fopen("/tmp/qemu", "r");
+    if(data != NULL)
+    {
+        fseek(data, 0, SEEK_END);
+        int32_t size = ftell(data);
+        rewind(data);
+        uint8_t* binary = (uint8_t*)malloc(size);
+        size_t read = fread(binary, 1, size, data);
+        if(read == 0) return -1;
+
+        uint8_t* offset = binary;
+        gStartAddress2 = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
+        gEntryPointAddress2 = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
+        gEntryPointSize2 = *(uint64_t*)offset;
+
+        free(binary);
+        fclose(data);
+    }
+
     CPUClass *cc = CPU_GET_CLASS(cpu);
     int ret;
     SyncClocks sc = { 0 };
