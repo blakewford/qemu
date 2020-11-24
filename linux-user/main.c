@@ -967,6 +967,8 @@ int main(int argc, char **argv, char **envp)
             ndx++;
         }
 
+        char path[256];
+        strcpy(path, exec_path);
         memcpy(&info, &sect.si[textIndex*infoSize], infoSize);
         FILE* data = fopen("/tmp/qemu", "w");
         if(data != NULL)
@@ -974,6 +976,9 @@ int main(int argc, char **argv, char **envp)
             fwrite(&info.address, sizeof(info.address), 1, data);
             fwrite(&entryPointAddress, sizeof(entryPointAddress), 1, data);
             fwrite(&entryPointSize, sizeof(entryPointSize), 1, data);
+            fwrite(&info.offset, sizeof(info.offset), 1, data);
+            fwrite(&info.size, sizeof(info.size), 1, data);
+            fwrite(path, 256, 1, data);
             fclose(data);
         }
 

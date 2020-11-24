@@ -44,6 +44,8 @@
 uint64_t gStartAddress2 = 0;
 uint64_t gEntryPointAddress2 = 0;
 uint64_t gEntryPointSize2 = 0;
+uint8_t* gTextSection = NULL;
+uint64_t gTextSize = 0;
 
 /* -icount align implementation. */
 
@@ -188,7 +190,13 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
         uint16_t count = (itb->size / 4);
         while(count--)
         {
-            printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", itb->pc + offset, 0, arm64_decode(0));
+            uint32_t insn = 0;
+            uint64_t relative = (itb->pc + offset) - gStartAddress2;
+            if(relative < gTextSize)
+            {
+                insn = *(uint32_t*)&gTextSection[relative];
+            }
+            printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", itb->pc + offset, insn, arm64_decode(insn));
             offset += 4;
         }
     }
@@ -718,6 +726,8 @@ static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
 
 int cpu_exec(CPUState *cpu)
 {
+    char buffer[256];
+    uint64_t textOffset = 0;
     FILE* data = fopen("/tmp/qemu", "r");
     if(data != NULL)
     {
@@ -734,9 +744,32 @@ int cpu_exec(CPUState *cpu)
         gEntryPointAddress2 = *(uint64_t*)offset;
         offset += sizeof(uint64_t);
         gEntryPointSize2 = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
+        textOffset = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
+        gTextSize = *(uint64_t*)offset;
+        offset += sizeof(uint64_t);
 
+        strcpy(buffer, (char*)offset);
         free(binary);
         fclose(data);
+    }
+
+    FILE* executable = fopen(buffer, "r");
+    if(executable)
+    {
+        fseek(executable, 0, SEEK_END);
+        int32_t size = ftell(executable);
+        rewind(executable);
+        uint8_t* binary = (uint8_t*)malloc(size);
+        size_t read = fread(binary, 1, size, executable);
+        if(read == 0) return -1;
+
+        gTextSection = (uint8_t*)malloc(gTextSize);
+        memcpy(gTextSection, binary + textOffset, gTextSize);
+
+        free(binary);
+        fclose(executable);
     }
 
     CPUClass *cc = CPU_GET_CLASS(cpu);
@@ -814,6 +847,7 @@ int cpu_exec(CPUState *cpu)
         }
     }
 
+    free(gTextSection);
     cc->cpu_exec_exit(cpu);
     rcu_read_unlock();
 
