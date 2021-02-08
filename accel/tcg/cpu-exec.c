@@ -195,7 +195,7 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
             {
                 insn = *(uint32_t*)&gTextSection[relative];
             }
-            printf("{\"address\":\"0x%lx\",\"opcode\":\"0x%x\",\"mnem\":\"%s\"},", itb->pc + offset, insn, arm64_decode(insn));
+            printf("{\"a\":\"0x%lx\",\"o\":\"0x%x\",\"m\":\"%s\"},", itb->pc + offset, insn, arm64_decode(insn));
             offset += 4;
         }
     }
