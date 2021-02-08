@@ -618,6 +618,12 @@ static int parse_args(int argc, char **argv)
 int main(int argc, char **argv, char **envp)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
+
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    char* timestamp = (char*)malloc(24);
+    memset(timestamp, '\0', 24);
+    sprintf(timestamp,"%04d-%02d-%02d%02d:%02d:%02d_%d", tm->tm_year+1900, tm->tm_mon,tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, 0);
     printf("{\"triple\":\"aarch64-unknown-linux-gnu\",\"size\":309666,\"run\":[");
 
     struct target_pt_regs regs1, *regs = &regs1;
@@ -935,11 +941,13 @@ int main(int argc, char **argv, char **envp)
             fwrite(&info.offset, sizeof(info.offset), 1, data);
             fwrite(&info.size, sizeof(info.size), 1, data);
             fwrite(path, 256, 1, data);
+            fwrite(timestamp, 24, 1, data);
             fclose(data);
         }
 
         free(binary);
         fclose(executable);
+        free(timestamp);
     }
 
     for (wrk = target_environ; *wrk; wrk++) {

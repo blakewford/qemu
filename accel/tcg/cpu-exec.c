@@ -726,6 +726,7 @@ static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
 int cpu_exec(CPUState *cpu)
 {
     char buffer[256];
+    char timestamp[24];
     uint64_t textOffset = 0;
     FILE* data = fopen("/tmp/qemu", "r");
     if(data != NULL)
@@ -750,6 +751,7 @@ int cpu_exec(CPUState *cpu)
         offset += sizeof(uint64_t);
 
         strcpy(buffer, (char*)offset);
+        strcpy(timestamp, (char*)offset + 256);
         free(binary);
         fclose(data);
     }
